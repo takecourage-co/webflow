@@ -1,56 +1,63 @@
-// Fetch and inject remote nav
-fetch("https://sc-nav.take-courage.workers.dev/")
-  .then(response => {
-    if (!response.ok) throw new Error("Network response was not ok");
-    return response.text();
-  })
-  .then(html => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    const nav = doc.querySelector("nav");
-    if (nav) {
-      document.getElementById("nav-placeholder").replaceWith(nav);
-      setTimeout(() => {
-        if (window.Webflow && typeof window.Webflow.ready === "function") {
-          window.Webflow.ready();
-        }
-        if (window.Webflow && Array.isArray(window.Webflow.require)) {
-          try {
-            window.Webflow.require("ix2").init();
-          } catch (e) {
-            console.warn("Webflow interactions not initialised:", e);
+  <script>
+  fetch("https://sc-nav.take-courage.workers.dev/")
+    .then(response => {
+      if (!response.ok) throw new Error("Network response was not ok");
+      return response.text();
+    })
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const nav = doc.querySelector("nav");
+      if (nav) {
+        document.getElementById("nav-placeholder").replaceWith(nav);
+
+        // 🔄 Reinitialise Webflow JS after inserting nav
+        setTimeout(() => {
+          if (window.Webflow && typeof window.Webflow.ready === "function") {
+            window.Webflow.ready();
           }
-        }
-      }, 100);
-    } else {
-      document.getElementById("nav-placeholder").innerText = "Navigation not found.";
-    }
-  })
-  .catch(error => {
-    console.error("Fetch error:", error);
-    document.getElementById("nav-placeholder").innerText = "Failed to load navigation.";
-  });
+          if (window.Webflow && Array.isArray(window.Webflow.require)) {
+            try {
+              window.Webflow.require("ix2").init();
+            } catch (e) {
+              console.warn("Webflow interactions not initialised:", e);
+            }
+          }
+        }, 100);
 
-// Nav border toggle
-document.addEventListener("DOMContentLoaded", function () {
-  document.querySelectorAll('[nav-border="trigger"]').forEach(function (trigger) {
-    trigger.addEventListener("click", function () {
-      document.querySelectorAll('[nav-border="target"]').forEach(function (target) {
-        target.classList.add("is--visible");
+      } else {
+        document.getElementById("nav-placeholder").innerText = "Navigation not found.";
+      }
+    })
+    .catch(error => {
+      console.error("Fetch error:", error);
+      document.getElementById("nav-placeholder").innerText = "Failed to load navigation.";
+    });
+</script>
+
+<script>
+<!-- Show nav border -->
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll('[nav-border="trigger"]').forEach(function (trigger) {
+      trigger.addEventListener("click", function () {
+        document.querySelectorAll('[nav-border="target"]').forEach(function (target) {
+          target.classList.add("is--visible");
+        });
+      });
+    });
+
+    document.querySelectorAll('[nav-border="remove"]').forEach(function (remover) {
+      remover.addEventListener("click", function () {
+        document.querySelectorAll('[nav-border="target"]').forEach(function (target) {
+          target.classList.remove("is--visible");
+        });
       });
     });
   });
+</script>
 
-  document.querySelectorAll('[nav-border="remove"]').forEach(function (remover) {
-    remover.addEventListener("click", function () {
-      document.querySelectorAll('[nav-border="target"]').forEach(function (target) {
-        target.classList.remove("is--visible");
-      });
-    });
-  });
-});
-
-// Hover theme
+<script>
+<!-- Change page theme when hovering over nav card -->
 document.addEventListener("DOMContentLoaded", function () {
   const scBody = document.querySelector(".sc-body");
   let originalThemeClass = null;
@@ -65,10 +72,12 @@ document.addEventListener("DOMContentLoaded", function () {
     if (target) {
       const themeValue = target.getAttribute("theme");
       const newThemeClass = "is--" + themeValue;
+
       if (!originalThemeClass) {
         const existingThemes = getThemeClassList(scBody);
         originalThemeClass = existingThemes.length > 0 ? existingThemes[0] : null;
       }
+
       getThemeClassList(scBody).forEach(cls => scBody.classList.remove(cls));
       scBody.classList.add(newThemeClass);
       currentHoverTheme = newThemeClass;
@@ -80,29 +89,38 @@ document.addEventListener("DOMContentLoaded", function () {
     if (target) {
       const themeValue = target.getAttribute("theme");
       const themeClass = "is--" + themeValue;
+
       if (currentHoverTheme === themeClass) {
         scBody.classList.remove(themeClass);
+
         if (originalThemeClass) {
           scBody.classList.add(originalThemeClass);
         }
+
         currentHoverTheme = null;
         originalThemeClass = null;
       }
     }
   });
 });
+</script>
 
-// Mirror card clicking
+<script>
+<!-- Mirror card clicking -->
 document.querySelectorAll('.sc-nav__card').forEach(card => {
   card.addEventListener('click', event => {
     const link = card.querySelector('a');
-    if (link && event.target !== link && !link.contains(event.target)) {
-      link.click();
+    if (link) {
+      if (event.target !== link && !link.contains(event.target)) {
+        link.click();
+      }
     }
   });
 });
+</script>
 
-// Ghost effects
+<script>
+<!-- Ghosts -->
 document.addEventListener("DOMContentLoaded", () => {
   const MAX_GHOSTS = 200;
   const ADD_INTERVAL = 200;
@@ -114,9 +132,11 @@ document.addEventListener("DOMContentLoaded", () => {
   function createGhosts(container, { selector, className, total, keep }) {
     const element = container.querySelector(selector);
     if (!element) return;
+
     const text = element.textContent;
     const existing = Array.from(container.querySelectorAll(`.${className}`));
     if (existing.length >= total) return;
+
     const newGhosts = [];
 
     for (let i = existing.length; i < total; i++) {
@@ -157,6 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function addSingleHeaderGhost(header) {
     const h1 = header.querySelector("h1");
     if (!h1) return;
+
     const existing = header.querySelectorAll(".sc-header__ghost").length;
     if (existing >= MAX_GHOSTS) return;
 
@@ -230,11 +251,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const intensifyObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       intensifyInView = entry.isIntersecting;
+
       if (intensifyInView && !addIntervalId && isIntensifying) {
         addIntervalId = setInterval(() => {
           headers.forEach(header => addSingleHeaderGhost(header));
         }, ADD_INTERVAL);
       }
+
       if (!intensifyInView && addIntervalId) {
         clearInterval(addIntervalId);
         addIntervalId = null;
@@ -247,9 +270,11 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("scroll", () => {
     const currentY = window.scrollY;
     isIntensifying = currentY > lastScrollY;
+
     if (!isIntensifying && addIntervalId) {
       headers.forEach(header => removeHeaderGhosts(header, 5));
     }
+
     lastScrollY = currentY;
   });
 
@@ -268,3 +293,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+</script>
+
+<script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=65ca0469e50425dbb79802ac" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+<script src="https://cdn.prod.website-files.com/65ca0469e50425dbb79802ac/js/webflow.schunk.36b8fb49256177c8.js" type="text/javascript"></script>
+<script src="https://cdn.prod.website-files.com/65ca0469e50425dbb79802ac/js/webflow.3d569bf6.391759af8c42d475.js" type="text/javascript"></script>
